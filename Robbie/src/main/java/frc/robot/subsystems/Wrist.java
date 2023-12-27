@@ -24,7 +24,7 @@ public class Wrist extends SubsystemBase{
     }
     
     CANSparkMax armMaster = new CANSparkMax(ArmConstants.DEVICE_ID_ARM_MASTER, MotorType.kBrushless);
-    CANSparkMax armSlave = new CANSparkMax(ArmConstants.DEVICE_ID_ARM_SLAVE, MotorType.kBrushless);
+    CANSparkMax armSlave  = new CANSparkMax(ArmConstants.DEVICE_ID_ARM_SLAVE,  MotorType.kBrushless);
 
     ArmState state = ArmState.OFF;
 
