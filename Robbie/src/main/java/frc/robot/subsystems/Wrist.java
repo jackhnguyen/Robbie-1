@@ -56,6 +56,7 @@ public class Wrist extends SubsystemBase{
                 goToSetpoint();
                 break;
             case ZERO:
+                zero();
                 break;
         }   
         
@@ -63,6 +64,16 @@ public class Wrist extends SubsystemBase{
 
     public Rotation2d getAngle(){
         return Rotation2d.fromRotations(armMaster.getEncoder().getPosition() / ArmConstants.ARM_GEAR_RATIO);
+    }
+
+    public void zero(){
+      if(!zero indicator)
+        jog(0.1); //whatever speed is comfortable
+      else{
+        zeroEncoders();
+        jog(0);
+        setState(SubsystemState.STOW);
+      }
     }
 
     public void set(double value){
