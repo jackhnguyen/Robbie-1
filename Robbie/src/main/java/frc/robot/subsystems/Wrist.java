@@ -26,53 +26,53 @@ public class Wrist extends SubsystemBase{
     CANSparkMax armMaster = new CANSparkMax(ArmConstants.DEVICE_ID_ARM_MASTER, MotorType.kBrushless);
     CANSparkMax armSlave  = new CANSparkMax(ArmConstants.DEVICE_ID_ARM_SLAVE,  MotorType.kBrushless);
 
-    ArmState state = ArmState.OFF;
+    ArmState state = ArmState.OFF; 
 
     double jogValue = 0;
     Rotation2d setpoint = new Rotation2d();
 
-    private static Wrist instance = new Wrist();
-
+    private static Wrist instance = new Wrist(); //global instance; relieves from manually referencing wrist in other classes
+    //when calling method from wrist fom another class the format is className.Method() bc wrist instantiazation is static
     public Wrist(){
-        configMotors();
+        configMotors(); //sets up motor and stuff
     }
 
-    public static Wrist getInstance(){
+    public static Wrist getInstance(){  //gets class instance
         return instance;
     }
 
     @Override
-    public void periodic() {
-        logData();
+    public void periodic() { //periodic = constantly running
+        logData(); //logs data using smartdashboard
         
-        switch(state){
-            case OFF:
+        switch(state){  //forever if else loop
+            case OFF:          //if state = OFF than the loop stops and it runs the method set() 
                 set(0);
+                break; 
+            case JOG: //motor power to limit overshoot n stuff
+                set(jogValue);      //if state = JOG than loop stops and it runs set()
                 break;
-            case JOG:
-                set(jogValue);
-                break;
-            case POSITION:
+            case POSITION: //gets position of wrist ex; it's angle 
                 goToSetpoint();
                 break;
-            case ZERO:
+            case ZERO:  //wrist turned off 
                 zero();
                 break;
         }   
         
     }
 
-    public Rotation2d getAngle(){
+    public Rotation2d getAngle(){ //converts motor turns into angle form
         return Rotation2d.fromRotations(armMaster.getEncoder().getPosition() / ArmConstants.ARM_GEAR_RATIO);
     }
 
-    public void zero(){
-      if(!zero indicator)
+    public void zero(){ //if not zero than jog will turn motor at 0.1 power, if zero than motor stops
+      if(!zero indicator)   
         jog(0.1); //whatever speed is comfortable
       else{
         zeroEncoders();
         jog(0);
-        setState(SubsystemState.STOW);
+        setState(SubsystemState.STOW); 
       }
     }
 
@@ -118,26 +118,25 @@ public class Wrist extends SubsystemBase{
 
 
     public void configMotors(){
-        armMaster.restoreFactoryDefaults();
-        armSlave.restoreFactoryDefaults();
+        armMaster.restoreFactoryDefaults();  //default motar controlr settyn
+        armSlave.restoreFactoryDefaults();   
 
-        armMaster.setInverted(false);
-        armSlave.setInverted(armMaster.getInverted());
+        armMaster.setInverted(false);   //DOES NOT INVERT
+        armSlave.setInverted(!armMaster.getInverted()); //copies opposite of master value
 
-        armMaster.setIdleMode(IdleMode.kBrake);
-        armSlave.setIdleMode(armMaster.getIdleMode());
+        armMaster.setIdleMode(IdleMode.kBrake);   //sets motor setting 
+        armSlave.setIdleMode(armMaster.getIdleMode()); //slave copies master
 
-        armMaster.setSmartCurrentLimit(40, 40);
-        armSlave.setSmartCurrentLimit(40, 40);
-
-        SparkMaxPIDController armController = armMaster.getPIDController();
-        armController.setP(ArmConstants.ARM_kP);
-        armController.setD(ArmConstants.ARM_kD);
+        armMaster.setSmartCurrentLimit(40, 40); //freelimit: max amps into motor
+        armSlave.setSmartCurrentLimit(40, 40); //stalllimit: enough amps to resist torque
+        SparkMaxPIDController armController = armMaster.getPIDController(); //create motor with its pid controller
+        armController.setP(ArmConstants.ARM_kP); //pid
+        armController.setD(ArmConstants.ARM_kD); //pid 
 
         armController.setSmartMotionAccelStrategy(AccelStrategy.kSCurve, 0);
         armController.setSmartMotionMaxAccel(ArmConstants.MAX_ACCELERATION, 0);
         armController.setSmartMotionMaxVelocity(ArmConstants.MAX_VELOCITY, 0);
 
-        armSlave.follow(armMaster);
+        armSlave.follow(armMaster); //slave copies values of master
     }
 }
